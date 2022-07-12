@@ -1555,3 +1555,39 @@ func (r *Repo) Payload(roleFilename string) ([]byte, error) {
 
 	return p, nil
 }
+
+func (r *Repo) RoleStatus(role string, expiresOn time.Time) error {
+	var expires time.Time
+	switch role {
+	case "root":
+		root, err := r.root()
+		if err != nil {
+			return err
+		}
+		expires = root.Expires
+	case "snapshot":
+		snapshot, err := r.snapshot()
+		if err != nil {
+			return err
+		}
+		expires = snapshot.Expires
+	case "timestamp":
+		timestamp, err := r.timestamp()
+		if err != nil {
+			return err
+		}
+		expires = timestamp.Expires
+	case "targets":
+		targets, err := r.topLevelTargets()
+		if err != nil {
+			return err
+		}
+		expires = targets.Expires
+	default:
+		return fmt.Errorf("invalid role: %s", role)
+	}
+	if expires.Before(expiresOn) {
+		return fmt.Errorf("role expired on: %s", expires)
+	}
+	return nil
+}
