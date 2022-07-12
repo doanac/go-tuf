@@ -115,7 +115,16 @@ func runCommand(name string, args []string, dir string, insecure bool) error {
 	if !insecure {
 		p = getPassphrase
 	}
-	repo, err := tuf.NewRepo(tuf.FileSystemStore(dir, p))
+	store := os.Getenv("TUF_LOCAL_STORE")
+	var localStore tuf.LocalStore
+	if store == "git" {
+		localStore = tuf.GitLocalStore(dir, p)
+	} else if len(store) == 0 || store == "fs" {
+		localStore = tuf.FileSystemStore(dir, p)
+	} else {
+		return fmt.Errorf("invalid TUF_LOCAL_STORE: %s", store)
+	}
+	repo, err := tuf.NewRepo(localStore)
 	if err != nil {
 		return err
 	}
